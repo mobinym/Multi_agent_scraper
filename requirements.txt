@@ -1,0 +1,9 @@
+requests==2.31.0
+beautifulsoup4==4.12.2
+newspaper3k==0.2.8
+trafilatura==1.6.1
+langdetect==1.0.9
+langchain==0.1.0
+llama-cpp-python==0.2.11
+markdown==3.5.1
+PyQt5==5.15.10
