@@ -22,7 +22,6 @@ def test_url(url, description):
         return False
 
 def main():
-    # Test cases
     test_cases = [
         {
             "url": "https://www.isna.ir/news/1402121412343/",

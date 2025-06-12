@@ -34,9 +34,7 @@ class ResearcherAgent:
     def clean_text(self, text):
         if not text:
             return ""
-        # Remove extra whitespace
         text = re.sub(r'\s+', ' ', text)
-        # Remove special characters but keep Persian and English text
         text = re.sub(r'[^\u0600-\u06FF\u0750-\u077Fa-zA-Z0-9\s.,!?،؛؟]', '', text)
         return text.strip()
 
@@ -64,11 +62,9 @@ class ResearcherAgent:
             response.raise_for_status()
             soup = BeautifulSoup(response.text, 'html.parser')
             
-            # Remove unwanted elements
             for element in soup.find_all(['script', 'style', 'nav', 'header', 'footer', 'aside']):
                 element.decompose()
             
-            # Try to find the main content
             main_content = None
             for tag in ['article', 'main', 'div[class*="content"]', 'div[class*="post"]']:
                 main_content = soup.select_one(tag)
@@ -90,17 +86,14 @@ class ResearcherAgent:
             raise PermissionError("این وب‌سایت اجازه scraping نمی‌دهد.")
 
         try:
-            # Try newspaper3k first
             content = self.extract_with_newspaper(url)
             if content:
                 return {'content': self.clean_text(content), 'source': 'newspaper3k'}
 
-            # Try trafilatura next
             content = self.extract_with_trafilatura(url)
             if content:
                 return {'content': self.clean_text(content), 'source': 'trafilatura'}
 
-            # Try BeautifulSoup as last resort
             content = self.extract_with_bs4(url)
             if content:
                 return {'content': self.clean_text(content), 'source': 'beautifulsoup4'}

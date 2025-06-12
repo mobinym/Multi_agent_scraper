@@ -6,19 +6,13 @@ from PyQt5.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
 from PyQt5.QtCore import Qt, pyqtSignal, QThread
 from PyQt5.QtGui import QFont, QIcon, QPalette, QColor
 
-# --- Import the processing function ---
-# Make sure extract_and_summarize.py is in the same directory
 try:
     from extract_and_summarize import extract_and_summarize
 except ImportError:
-    # Provide a fallback if the file is missing, to prevent crashing
     def extract_and_summarize(url):
         raise ImportError("Could not find 'extract_and_summarize.py'. Please create it.")
 
 
-# ==============================================================================
-#  CUSTOM STYLED WIDGETS
-# ==============================================================================
 
 class ThemedButton(QPushButton):
     def __init__(self, text, parent=None):
@@ -112,12 +106,9 @@ class SectionLabel(QLabel):
             }
         """)
 
-# ==============================================================================
-#  PROCESSING THREAD (REFACTORED)
-# ==============================================================================
+
 
 class ProcessingThread(QThread):
-    # Signal now emits raw_content, summary, and a possible error string
     finished = pyqtSignal(str, str, str)
 
     def __init__(self, url):
@@ -127,13 +118,11 @@ class ProcessingThread(QThread):
     def run(self):
         try:
             raw_content, summary = extract_and_summarize(self.url)
-            self.finished.emit(raw_content, summary, "")  # Success, no error
+            self.finished.emit(raw_content, summary, "")  
         except Exception as e:
-            self.finished.emit("", "", str(e)) # Failure, send error message
+            self.finished.emit("", "", str(e))
 
-# ==============================================================================
-#  MAIN APPLICATION WINDOW
-# ==============================================================================
+
 
 class WebsiteSummarizer(QMainWindow):
     def __init__(self):
@@ -142,7 +131,6 @@ class WebsiteSummarizer(QMainWindow):
         self.setMinimumSize(1200, 800)
         self.setWindowIcon(QIcon.fromTheme("applications-internet"))
 
-        # --- Global App Styling ---
         self.setStyleSheet("""
             QMainWindow { background-color: #1e1e1e; }
             QSplitter::handle { background-color: #424242; }
@@ -163,19 +151,16 @@ class WebsiteSummarizer(QMainWindow):
             }
         """)
 
-        # --- Main Layout ---
         main_widget = QWidget()
         self.setCentralWidget(main_widget)
         self.layout = QVBoxLayout(main_widget)
         self.layout.setSpacing(20)
         self.layout.setContentsMargins(25, 25, 25, 25)
 
-        # --- Header ---
         header_layout = QHBoxLayout()
         header_layout.addWidget(TitleLabel("Website Content Summarizer"))
         header_layout.addStretch()
 
-        # --- URL Input Section ---
         url_frame = QFrame()
         url_frame.setStyleSheet("background-color: #2d2d2d; border-radius: 8px;")
         url_layout = QHBoxLayout(url_frame)
@@ -189,15 +174,13 @@ class WebsiteSummarizer(QMainWindow):
         self.load_button.setIcon(QIcon.fromTheme("document-open-remote"))
         self.load_button.clicked.connect(self.start_processing)
         
-        url_layout.addWidget(self.url_input, 1) # Give line edit more space
+        url_layout.addWidget(self.url_input, 1)
         url_layout.addWidget(self.load_button)
 
-        # --- Progress Bar ---
         self.progress_bar = QProgressBar()
         self.progress_bar.setVisible(False)
-        self.progress_bar.setRange(0, 0)  # Indeterminate
+        self.progress_bar.setRange(0, 0)  
 
-        # --- Content Area (Stacked Widget for Empty State) ---
         self.stacked_widget = QStackedWidget()
         self.create_results_widget()
         self.create_empty_state_widget()
@@ -206,11 +189,10 @@ class WebsiteSummarizer(QMainWindow):
         self.stacked_widget.setCurrentWidget(self.empty_state_widget)
 
 
-        # --- Add all widgets to main layout ---
         self.layout.addLayout(header_layout)
         self.layout.addWidget(url_frame)
         self.layout.addWidget(self.progress_bar)
-        self.layout.addWidget(self.stacked_widget, 1) # Make it stretch
+        self.layout.addWidget(self.stacked_widget, 1) 
 
 
     def create_empty_state_widget(self):
@@ -236,7 +218,6 @@ class WebsiteSummarizer(QMainWindow):
         splitter = QSplitter(Qt.Horizontal)
         splitter.setHandleWidth(4)
 
-        # Raw content section
         raw_content_frame = QFrame()
         raw_content_frame.setStyleSheet("background-color: #2d2d2d; border-radius: 8px;")
         raw_content_layout = QVBoxLayout(raw_content_frame)
@@ -253,7 +234,6 @@ class WebsiteSummarizer(QMainWindow):
         raw_content_layout.addLayout(raw_title_layout)
         raw_content_layout.addWidget(self.raw_content_text)
 
-        # Summary section
         summary_frame = QFrame()
         summary_frame.setStyleSheet("background-color: #2d2d2d; border-radius: 8px;")
         summary_layout = QVBoxLayout(summary_frame)
@@ -264,7 +244,6 @@ class WebsiteSummarizer(QMainWindow):
         summary_title_layout.addWidget(summary_icon_label)
         summary_title_layout.addWidget(SectionLabel("Summary"))
         
-        # Add download button
         self.download_button = ThemedButton("Download Markdown")
         self.download_button.setIcon(QIcon.fromTheme("document-save"))
         self.download_button.clicked.connect(self.download_summary)
@@ -274,7 +253,7 @@ class WebsiteSummarizer(QMainWindow):
 
         self.summary_text = ThemedTextEdit()
         self.summary_text.setReadOnly(True)
-        self.summary_text.setMarkdown("") # To render markdown if needed
+        self.summary_text.setMarkdown("") 
 
         summary_layout.addLayout(summary_title_layout)
         summary_layout.addWidget(self.summary_text)
@@ -292,7 +271,6 @@ class WebsiteSummarizer(QMainWindow):
             QMessageBox.warning(self, "Input Error", "Please enter a URL to process.")
             return
 
-        # --- Start loading state ---
         self.load_button.setText("Loading...")
         self.load_button.setEnabled(False)
         self.url_input.setEnabled(False)
@@ -300,13 +278,11 @@ class WebsiteSummarizer(QMainWindow):
         self.raw_content_text.clear()
         self.summary_text.clear()
 
-        # --- Create and start processing thread ---
         self.thread = ProcessingThread(url)
         self.thread.finished.connect(self.on_processing_finished)
         self.thread.start()
 
     def on_processing_finished(self, raw_content, summary, error_message):
-        # --- Stop loading state ---
         self.load_button.setText("Summarize")
         self.load_button.setEnabled(True)
         self.url_input.setEnabled(True)
@@ -334,7 +310,6 @@ class WebsiteSummarizer(QMainWindow):
         
         if file_path:
             try:
-                # Get the actual Markdown content from the text edit
                 markdown_content = self.summary_text.toMarkdown()
                 with open(file_path, 'w', encoding='utf-8') as f:
                     f.write(markdown_content)
@@ -346,12 +321,10 @@ class WebsiteSummarizer(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     
-    # Use a modern, clean font if available
-    font = QFont("Segoe UI")  # Changed from Inter to Segoe UI
+    font = QFont("Segoe UI") 
     font.setPointSize(10)
     app.setFont(font)
     
-    # Set custom button style for QMessageBox
     app.setStyleSheet("""
         QMessageBox QPushButton {
             background-color: #009688; color: white; border: none;

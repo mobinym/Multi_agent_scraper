@@ -8,7 +8,6 @@ import re
 
 class SummarizerAgent:
     def __init__(self):
-        # Initialize Ollama model
         callback_manager = CallbackManager([StreamingStdOutCallbackHandler()])
         self.llm = Ollama(
             model="llama3.2",
@@ -17,7 +16,6 @@ class SummarizerAgent:
             verbose=True,
         )
         
-        # Define the summarization prompt template
         self.summary_prompt = PromptTemplate(
             input_variables=["content"],
             template="""
@@ -42,28 +40,21 @@ class SummarizerAgent:
             """
         )
         
-        # Create the chain
         self.chain = LLMChain(llm=self.llm, prompt=self.summary_prompt)
 
     def clean_markdown(self, text):
         """Clean and format the markdown output"""
-        # Remove extra newlines
         text = re.sub(r'\n{3,}', '\n\n', text)
-        # Ensure proper spacing around headers
         text = re.sub(r'(#+)([^#\n])', r'\1 \2', text)
-        # Ensure proper list formatting
         text = re.sub(r'^\s*[-*]\s*', '- ', text, flags=re.MULTILINE)
-        # Remove any extra spaces
         text = re.sub(r' +', ' ', text)
         return text.strip()
 
     def summarize(self, content):
         """Summarize the content using the LLM"""
         try:
-            # Get the summary from the LLM
             summary = self.chain.run(content)
             
-            # Clean and format the markdown
             cleaned_summary = self.clean_markdown(summary)
             
             return cleaned_summary
